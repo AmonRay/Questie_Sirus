@@ -1196,24 +1196,56 @@ local function isNamePlate(frame)
     return false
 end
 
+local function getNameRegion(frame)
+    -- ElvUI: name is stored in frame.UnitFrame.name (FontString)
+    if frame.UnitFrame and frame.UnitFrame.name then
+        return frame.UnitFrame.name
+    end
+
+    -- TidyPlates: name region inside frame.extended
+    if frame.extended and frame.extended.name then
+        return frame.extended.name
+    end
+
+    -- Aloft: name region inside frame.aloftData
+    if frame.aloftData and frame.aloftData.name then
+        return frame.aloftData.name
+    end
+
+    -- Kui_Nameplates
+    if frame.kui and frame.kui.name then
+        return frame.kui.name
+    end
+
+    -- Vanilla/default WotLK nameplate: name is the 7th region
+    local nameRegion = select(7, frame:GetRegions())
+    return nameRegion
+end
+
 local function scanWorldFrameChildren(frame, ...)
 	if not frame then return end
 
 	if not npFrames[frame] and isNamePlate(frame) then
-        npFrames[frame] = select(7, frame:GetRegions())
+        local nameRegion = getNameRegion(frame)
 
-        frame:HookScript("OnShow", QuestieCompat.NameplateCreated)
-        frame:HookScript("OnHide", _QuestieNameplate.RemoveFrame)
+        if nameRegion and nameRegion.GetText then
+            npFrames[frame] = nameRegion
 
-        if frame:IsShown() then
-		    QuestieCompat.NameplateCreated(frame)
+            frame:HookScript("OnShow", QuestieCompat.NameplateCreated)
+            frame:HookScript("OnHide", _QuestieNameplate.RemoveFrame)
+
+            if frame:IsShown() then
+                QuestieCompat.NameplateCreated(frame)
+            end
         end
 	end
 	return scanWorldFrameChildren(...)
 end
 
 function QuestieCompat.NameplateCreated(frame)
-    local name = npFrames[frame]:GetText()
+    local nameRegion = npFrames[frame]
+    if not nameRegion then return end
+    local name = nameRegion:GetText()
     local key = npActiveQuestNPCs[name]
     if key then
         local icon = _QuestieNameplate.GetValidIcon(QuestieTooltips.lookupByKey[key])
@@ -1229,8 +1261,10 @@ end
 
 function QuestieCompat.UpdateNameplate()
     for frame in pairs(npFrames) do
-        local name = npFrames[frame]:GetText()
-        local key = npActiveQuestNPCs[name]
+        local nameRegion = npFrames[frame]
+        if not nameRegion then npFrames[frame] = nil; break end
+        local name = nameRegion:GetText()
+        local key = name and npActiveQuestNPCs[name]
 
         local icon = _QuestieNameplate.GetValidIcon(QuestieTooltips.lookupByKey[key])
 

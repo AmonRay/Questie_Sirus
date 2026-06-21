@@ -648,12 +648,11 @@ function QuestieDB.IsDoable(questId, debugPrint)
         -- if we're on the parent quest then we implicitly know all other requirements are met
     end
 
-    local requiredRaces = QuestieDB.QueryQuestSingle(questId, "requiredRaces")
-    if (requiredRaces and not checkRace[requiredRaces]) then
-        QuestieDB.autoBlacklist[questId] = "race"
-        if debugPrint then Questie:Debug(Questie.DEBUG_SPAM, "[QuestieDB.IsDoable] Race requirement not fulfilled for quest " .. questId) end
-        return false
-    end
+-- local requiredRaces = QuestieDB.QueryQuestSingle(questId, "requiredRaces")
+-- if (requiredRaces and not checkRace[requiredRaces]) then
+--     QuestieDB.autoBlacklist[questId] = "race"
+--     return false
+-- end
 
     -- Check the preQuestSingle field where just one of the required quests has to be complete for a quest to show up
     local preQuestSingle = QuestieDB.QueryQuestSingle(questId, "preQuestSingle")
